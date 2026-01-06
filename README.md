@@ -1,6 +1,6 @@
 # blitzypad
 
-![](docs/r1c.png)
+![](docs/r2.png)
 
 My starter hackpad project for Blueprint! Has four keys in a grid, an extra key, a rotary encoder, and a 128x32 OLED screen.
 
