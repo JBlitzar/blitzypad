@@ -1,6 +1,6 @@
 # blitzypad
 
-![alt text](docs/r2.png)
+![alt text](docs/rl.png)
 
 My starter hackpad project for Blueprint! Has four keys in a grid, an extra key, a rotary encoder, and a 128x32 OLED screen.
 
@@ -10,10 +10,11 @@ I plan to use this for all sorts of things! General use, sure. Probably also mus
 
 <table width="100%">
     <tr>
-        <td width="50%">
+    <td><img src="docs/r2.png"  width="100%"></td>
+        <td>
             <img src="docs/render_2.png" width="100%">
         </td>
-        <td width="50%">
+        <td>
             <img src="docs/model.png" width="100%">
         </td>
     </tr>
