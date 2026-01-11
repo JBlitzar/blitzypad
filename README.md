@@ -61,3 +61,4 @@ _clean PCB without silkscreen:_
 - 1 XIAO RP2040
 - 1 Case
 - 4 bolts to hold the case together, I guess?
+- 1 male-male USB-C data cable (to plug the xiao in)
