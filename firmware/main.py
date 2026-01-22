@@ -12,8 +12,8 @@ import neopixel
 
 btn_tl = board.D7  # SW1 - GPIO1/RX
 btn_tr = board.D8  # SW2 - GPIO2/SCK
-btn_bl = board.D10  # SW3 - GPIO4/MISO
-btn_br = board.D9  # SW4 - GPIO3/MOSI
+btn_bl = board.D9  # SW3 - GPIO4/MISO
+btn_br = board.D10  # SW4 - GPIO3/MOSI
 
 extra_btn = board.D3  # SW5 - GPIO29/ADC3/A3
 
