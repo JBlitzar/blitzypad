@@ -1,4 +1,3 @@
-# inspired from https://github.com/hackclub/hackpad/blob/main/hackpads/cyaopad/firmware/main.py + https://blueprint.hackclub.com/hackpad#firmware
 import time
 import board
 from kmk.extensions.display.ssd1306 import SSD1306
@@ -11,42 +10,57 @@ from kmk.modules.macros import Press, Release, Tap, Macros
 import neopixel
 
 
-btn_tl = board.GP1
-btn_tr = board.GP2
-btn_bl = board.GP4
-btn_br = board.GP3
+btn_tl = board.D7  # SW1 - GPIO1/RX
+btn_tr = board.D8  # SW2 - GPIO2/SCK
+btn_bl = board.D10  # SW3 - GPIO4/MISO
+btn_br = board.D9  # SW4 - GPIO3/MOSI
 
-extra_btn = board.GP29
-
-pixels = neopixel.NeoPixel(board.GP0, 2, brightness=0.3, auto_write=False)
-
+extra_btn = board.D3  # SW5 - GPIO29/ADC3/A3
 
 PINS = [btn_tl, btn_tr, btn_bl, btn_br, extra_btn]
 
 
-bus = busio.I2C(board.GP_SCL, board.GP_SDA)
-driver = SSD1306(i2c=bus, device_address=0x3C)
+try:
+    i2c = busio.I2C(board.SCL, board.SDA)
 
-display = Display(
-    display=driver,
-    width=128,
-    height=32,
-    dim_time=10,
-    dim_target=0.2,
-    off_time=1200,
-    brightness=0.8,
-)
+    while not i2c.try_lock():
+        pass
+    print(
+        "I2C addresses found:", [hex(device_address) for device_address in i2c.scan()]
+    )
+    i2c.unlock()
 
-display.entries = [
-    TextEntry(text="Hello, world!1", x=0, y=0, x_anchor="M"),
-]
+    display = SSD1306(128, 64, i2c, addr=0x3C)
+except Exception as e:
+    print(f"I2C setup failed: {e}")
+    display = None
+
+
 keyboard = KMKKeyboard()
-keyboard.extensions.append(display)
+keyboard.pixels = None
+
+
+pixels = neopixel.NeoPixel(board.D0, 2, brightness=0.3, auto_write=False)
+
+
+if display:
+    display_ext = Display(
+        display=display,
+        width=128,
+        height=32,
+        dim_time=10,
+        dim_target=0.2,
+        off_time=1200,
+        brightness=0.8,
+    )
+    display_ext.entries = [
+        TextEntry(text="Hello, world!1", x=0, y=0, x_anchor="M"),
+    ]
+    keyboard.extensions.append(display_ext)
 
 macros = Macros()
 keyboard.modules.append(macros)
 
-# placeholder for now, I plan on addressing these in client-side software
 KEYMAP = [
     KC.W,
     KC.A,
@@ -54,17 +68,16 @@ KEYMAP = [
     KC.D,
     KC.MACRO("wow!"),
 ]
+
 keyboard.matrix = KeysScanner(
     pins=PINS,
     value_when_pressed=False,
 )
 
-
 keyboard.keymap = [KEYMAP]
 
 if __name__ == "__main__":
     keyboard.go()
-
     pixels[0] = (0, 0, 255)
     pixels[1] = (255, 0, 255)
     pixels.show()
