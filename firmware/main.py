@@ -63,9 +63,9 @@ keyboard.modules.append(macros)
 
 KEYMAP = [
     KC.W,
+    KC.D,
     KC.A,
     KC.S,
-    KC.D,
     KC.MACRO("wow!"),
 ]
 
