@@ -1,4 +1,6 @@
 import time
+
+time.sleep(3)
 import board
 from kmk.extensions.display.ssd1306 import SSD1306
 from kmk.extensions.display import Display, TextEntry
@@ -15,6 +17,8 @@ import adafruit_displayio_ssd1306
 from adafruit_display_text import label
 import i2cdisplaybus
 from adafruit_display_text import bitmap_label
+from kmk.modules import Module
+import digitalio
 
 
 btn_tl = board.D7  # SW1 - GPIO1/RX
@@ -24,7 +28,54 @@ btn_br = board.D10  # SW4 - GPIO3/MOSI
 
 extra_btn = board.D3  # SW5 - GPIO29/ADC3/A3
 
+# rot_left = board.A1
+# rot_right = board.A0
+# rot_press = board.A3
+
+# PINS = [btn_tl, btn_tr, btn_bl, btn_br, extra_btn, rot_left, rot_right]
+
+
 PINS = [btn_tl, btn_tr, btn_bl, btn_br, extra_btn]
+
+
+class RotaryAsKeys(Module):
+    def __init__(self):
+        self.pins_initialized = False
+
+    def after_matrix_scan(self, keyboard):
+        if not self.pins_initialized:
+            import digitalio
+            import board
+
+            self.a = digitalio.DigitalInOut(board.A1)
+            self.a.direction = digitalio.Direction.INPUT
+            self.a.pull = digitalio.Pull.UP
+
+            self.b = digitalio.DigitalInOut(board.A0)
+            self.b.direction = digitalio.Direction.INPUT
+            self.b.pull = digitalio.Pull.UP
+
+            self.sw = digitalio.DigitalInOut(board.A3)
+            self.sw.direction = digitalio.Direction.INPUT
+            self.sw.pull = digitalio.Pull.UP
+
+            self.pins_initialized = True
+            return  # wait for next scan to poll
+        if self.a.value != self.last_a:
+            if self.a.value == False:  # falling edge
+                if self.b.value == True:
+                    keyboard.press(KC.VOLD)
+                    keyboard.release(KC.VOLD)
+                else:
+                    keyboard.press(KC.VOLU)
+                    keyboard.release(KC.VOLU)
+        if self.sw.value != self.last_sw:
+            if self.sw.value == False:  # falling edge
+                keyboard.press(KC.MUTE)
+                keyboard.release(KC.MUTE)
+        self.last_a = self.a.value
+        self.last_b = self.b.value
+        self.last_sw = self.sw.value
 
 
 #
@@ -35,17 +86,15 @@ keyboard.pixels = None
 
 keyboard.extensions.append(MediaKeys())
 
-ENC_A = board.A1  # GPIO27
-ENC_B = board.A0  # GPIO26
-ENC_SW = board.A3  # GPIO28
+# ENC_A = board.A1  # GPIO27
+# ENC_B = board.A0  # GPIO26
+# ENC_SW = board.A3  # GPIO28
 
-encoder = EncoderHandler()
-encoder.pins = ((ENC_A, ENC_B, ENC_SW),)
+# encoder = EncoderHandler()
+# encoder.pins = ((ENC_A, ENC_B, ENC_SW),)
+# encoder.map = ((KC.A, KC.B, KC.C),)
 
-encoder.map = ((KC.VOLD, KC.VOLU, KC.MUTE),)
-
-
-keyboard.modules.append(encoder)
+# keyboard.modules.append(encoder)
 
 
 pixels = neopixel.NeoPixel(board.D0, 2, brightness=0.3, auto_write=False)
@@ -60,6 +109,9 @@ KEYMAP = [
     KC.A,
     KC.S,
     KC.MACRO("wow!"),
+    # KC.VOLD,  # rot_left
+    # KC.VOLU,  # rot_right
+    # KC.MUTE,  # rot_press
 ]
 
 keyboard.matrix = KeysScanner(
@@ -68,6 +120,9 @@ keyboard.matrix = KeysScanner(
 )
 
 keyboard.keymap = [KEYMAP]
+
+keyboard.modules.append(RotaryAsKeys())
+
 sda, scl = board.SDA, board.SCL
 
 i2c = busio.I2C(scl, sda)
@@ -89,9 +144,5 @@ group = displayio.Group()
 group.append(lbl)
 display.root_group = group
 
-if __name__ == "__main__":
-    pixels[0] = (0, 0, 255)
-    pixels[1] = (255, 0, 255)
-    pixels.show()
 
-    keyboard.go()
+keyboard.go()
