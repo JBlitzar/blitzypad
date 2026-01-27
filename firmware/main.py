@@ -29,6 +29,7 @@ class InputActionType:
     CONSUMER_CONTROL = 2
     LAMBDA = 3
     MACRO = 4
+    SHORTCUT = 5
 
 
 class InputAction:
@@ -68,6 +69,22 @@ class InputAction:
                     layout.write(self.value)
             else:
                 layout.write(self.value)
+
+        elif self.action_type == InputActionType.SHORTCUT:
+            # value is a list of keycodes
+            if btn_value is not None:
+                if btn_value is False:
+                    for key in self.value:
+                        keyboard.press(key)
+                else:
+                    for key in self.value:
+                        keyboard.release(key)
+            else:
+                for key in self.value:
+                    keyboard.press(key)
+                time.sleep(0.05)
+                for key in self.value:
+                    keyboard.release(key)
         else:
             raise ValueError("Unknown action type")
 
@@ -85,13 +102,24 @@ class InputMap:
 
 
 MAPS = [
+    # InputMap(
+    #     "test",
+    #     {
+    #         0: InputAction(Keycode.A),
+    #         1: InputAction(Keycode.B),
+    #         2: InputAction(Keycode.C),
+    #         3: InputAction("hello, world!!", InputActionType.MACRO),
+    #         4: InputAction(Keycode.E),
+    #         5: InputAction(Keycode.F),
+    #     },
+    # ),
     InputMap(
-        "WASD",
+        "Arrows",
         {
-            0: InputAction(Keycode.W),
-            1: InputAction(Keycode.D),
-            2: InputAction(Keycode.A),
-            3: InputAction(Keycode.S),
+            0: InputAction(Keycode.UP_ARROW),
+            1: InputAction(Keycode.RIGHT_ARROW),
+            2: InputAction(Keycode.LEFT_ARROW),
+            3: InputAction(Keycode.DOWN_ARROW),
             4: InputAction(
                 ConsumerControlCode.VOLUME_INCREMENT, InputActionType.CONSUMER_CONTROL
             ),
@@ -101,14 +129,24 @@ MAPS = [
         },
     ),
     InputMap(
-        "test",
+        "programming",
         {
-            0: InputAction(Keycode.A),
-            1: InputAction(Keycode.B),
-            2: InputAction(Keycode.C),
-            3: InputAction("hello, world!!", InputActionType.MACRO),
-            4: InputAction(Keycode.E),
-            5: InputAction(Keycode.F),
+            0: InputAction(
+                "#include <iostream>\n#include <vector>\nusing namespace std;\n\nint main() {\ncin.tie(0);ios_base::sync_with_stdio(false);\nreturn 0;\n\n",
+                InputActionType.MACRO,
+            ),
+            1: InputAction("for(int i =0; i < n; i++){", InputActionType.MACRO),
+            2: InputAction("vector<int> vec;", InputActionType.MACRO),
+            3: InputAction(
+                'void print_vec(vector<int> vec){\nfor(int i=0;i<vec.size();i++){\ncout << vec[i];\n\ncout << "\\n";',
+                InputActionType.MACRO,
+            ),
+            4: InputAction(
+                [Keycode.OPTION, Keycode.LEFT_ARROW], InputActionType.SHORTCUT
+            ),
+            5: InputAction(
+                [Keycode.OPTION, Keycode.RIGHT_ARROW], InputActionType.SHORTCUT
+            ),
         },
     ),
 ]
