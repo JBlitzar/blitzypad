@@ -1,5 +1,6 @@
 import time
 
+
 import board
 import busio
 import digitalio
@@ -15,13 +16,104 @@ from adafruit_hid.consumer_control_code import ConsumerControlCode
 from adafruit_hid.keyboard import Keyboard
 from adafruit_hid.keycode import Keycode
 
-try:
-    from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
-except ImportError:
-    KeyboardLayoutUS = None
+
+from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
 
 
 # time.sleep(3)
+
+
+# An input action. This can be a keycode, consumer control code, or lambda.
+class InputActionType:
+    KEYCODE = 1
+    CONSUMER_CONTROL = 2
+    LAMBDA = 3
+    MACRO = 4
+
+
+class InputAction:
+    def __init__(self, value, action_type: int = InputActionType.KEYCODE):
+        self.action_type = action_type
+        self.value = value
+
+    def perform(
+        self,
+        keyboard: Keyboard,
+        consumer: ConsumerControl,
+        layout: KeyboardLayoutUS,
+        btn_value: bool = None,
+    ):
+        if self.action_type == InputActionType.KEYCODE:
+            if btn_value is not None:
+                if btn_value is False:
+                    keyboard.press(self.value)
+                else:
+                    keyboard.release(self.value)
+            else:
+                keyboard.press(self.value)
+                time.sleep(0.05)
+                keyboard.release(self.value)
+        elif self.action_type == InputActionType.CONSUMER_CONTROL:
+            consumer.send(self.value)
+        elif self.action_type == InputActionType.LAMBDA:
+            if btn_value is not None:
+                if btn_value is True:
+                    self.value()
+            else:
+                self.value()  # I sure do love python dynamic typing
+        elif self.action_type == InputActionType.MACRO:
+            # type using layout
+            if btn_value is not None:
+                if btn_value is True:
+                    layout.write(self.value)
+            else:
+                layout.write(self.value)
+        else:
+            raise ValueError("Unknown action type")
+
+
+# a series of modes, each mode has a name and a mapping of inputs to actions (tl, tr, bl, br, enc+enc-)
+# extra switches modes
+# display current mode
+class InputMap:
+    def __init__(self, name: str, button_map):
+        self.name = name
+        self.button_map = button_map
+
+    def get_action_for_button(self, button_index: int):
+        return self.button_map.get(button_index, None)
+
+
+MAPS = [
+    InputMap(
+        "WASD",
+        {
+            0: InputAction(Keycode.W),
+            1: InputAction(Keycode.D),
+            2: InputAction(Keycode.A),
+            3: InputAction(Keycode.S),
+            4: InputAction(
+                ConsumerControlCode.VOLUME_INCREMENT, InputActionType.CONSUMER_CONTROL
+            ),
+            5: InputAction(
+                ConsumerControlCode.VOLUME_DECREMENT, InputActionType.CONSUMER_CONTROL
+            ),
+        },
+    ),
+    InputMap(
+        "test",
+        {
+            0: InputAction(Keycode.A),
+            1: InputAction(Keycode.B),
+            2: InputAction(Keycode.C),
+            3: InputAction("hello, world!!", InputActionType.MACRO),
+            4: InputAction(Keycode.E),
+            5: InputAction(Keycode.F),
+        },
+    ),
+]
+
+MAP = MAPS[0]
 
 
 class DebouncedInput:
@@ -59,7 +151,7 @@ class RotaryEncoder:
         self,
         a: digitalio.DigitalInOut,
         b: digitalio.DigitalInOut,
-        steps_per_detent: int = 4,
+        steps_per_detent: int = 2,
     ):
         self.a = a
         self.b = b
@@ -110,12 +202,14 @@ enc_b = _make_input(board.A0)
 # enc_sw = DebouncedInput(_make_input(board.A3))
 encoder = RotaryEncoder(enc_a, enc_b)
 
-buttons = [
-    (btn_tl, Keycode.W),
-    (btn_tr, Keycode.D),
-    (btn_bl, Keycode.A),
-    (btn_br, Keycode.S),
-]
+# buttons = [
+#     (btn_tl, Keycode.W),
+#     (btn_tr, Keycode.D),
+#     (btn_bl, Keycode.A),
+#     (btn_br, Keycode.S),
+# ]
+
+buttons = [btn_tl, btn_tr, btn_bl, btn_br]
 
 
 # try:
@@ -155,29 +249,33 @@ def _set_status(text: str) -> None:
 
 while True:
     now = time.monotonic()
-    for btn, keycode in buttons:
+    for btn in buttons:
         if btn.update(now):
-            if btn.value is False:
-                keyboard.press(keycode)
-            else:
-                keyboard.release(keycode)
+            InputAction.perform(
+                MAP.get_action_for_button(buttons.index(btn)),
+                keyboard,
+                consumer,
+                layout,
+                btn.value,
+            )
     if extra_btn.update(now) and extra_btn.value is False:
-        if layout:
-            layout.write("wow!")
-        else:
-            for kc in (Keycode.W, Keycode.O, Keycode.W):
-                keyboard.send(kc)
-            keyboard.press(Keycode.SHIFT)
-            keyboard.send(Keycode.ONE)
-            keyboard.release(Keycode.SHIFT)
-        _set_status("wow!")
+        MAP = MAPS[(MAPS.index(MAP) + 1) % len(MAPS)]
+        _set_status(MAP.name)
     detent = encoder.update()
     if detent == +1:
-        consumer.send(ConsumerControlCode.VOLUME_INCREMENT)
-        _set_status("vol+")
+        InputAction.perform(
+            MAP.get_action_for_button(len(buttons)),
+            keyboard,
+            consumer,
+            layout,
+        )
     elif detent == -1:
-        consumer.send(ConsumerControlCode.VOLUME_DECREMENT)
-        _set_status("vol-")
+        InputAction.perform(
+            MAP.get_action_for_button(len(buttons) + 1),
+            keyboard,
+            consumer,
+            layout,
+        )
     # if enc_sw.update(now) and enc_sw.value is False:
     #     consumer.send(ConsumerControlCode.MUTE)
     #     _set_status("mute")
