@@ -199,7 +199,7 @@ extra_btn = DebouncedInput(_make_input(board.D3))
 
 enc_a = _make_input(board.A1)
 enc_b = _make_input(board.A0)
-# enc_sw = DebouncedInput(_make_input(board.A3))
+
 encoder = RotaryEncoder(enc_a, enc_b)
 
 # buttons = [
