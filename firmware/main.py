@@ -149,6 +149,17 @@ MAPS = [
             ),
         },
     ),
+    InputMap(
+        "null",
+        {
+            0: InputAction(lambda: None, InputActionType.LAMBDA),
+            1: InputAction(lambda: None, InputActionType.LAMBDA),
+            2: InputAction(lambda: None, InputActionType.LAMBDA),
+            3: InputAction(lambda: None, InputActionType.LAMBDA),
+            4: InputAction(lambda: None, InputActionType.LAMBDA),
+            5: InputAction(lambda: None, InputActionType.LAMBDA),
+        },
+    ),
 ]
 
 MAP = MAPS[0]
