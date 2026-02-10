@@ -160,6 +160,24 @@ MAPS = [
             5: InputAction(lambda: None, InputActionType.LAMBDA),
         },
     ),
+    InputMap(
+        "blender",
+        {
+            0: InputAction(
+                [Keycode.CONTROL, Keycode.ALT, Keycode.KEYPAD_ZERO],
+                InputActionType.SHORTCUT,
+            ),
+            1: InputAction(Keycode.G),
+            2: InputAction(Keycode.R),
+            3: InputAction(Keycode.F12),
+            4: InputAction(
+                ConsumerControlCode.VOLUME_INCREMENT, InputActionType.CONSUMER_CONTROL
+            ),
+            5: InputAction(
+                ConsumerControlCode.VOLUME_DECREMENT, InputActionType.CONSUMER_CONTROL
+            ),
+        },
+    ),
 ]
 
 MAP = MAPS[0]
