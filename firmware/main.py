@@ -1,24 +1,19 @@
 import time
 
-
+import adafruit_displayio_ssd1306
 import board
 import busio
 import digitalio
 import displayio
+import i2cdisplaybus
 import terminalio
 import usb_hid
-
-import adafruit_displayio_ssd1306
-import i2cdisplaybus
 from adafruit_display_text import bitmap_label
 from adafruit_hid.consumer_control import ConsumerControl
 from adafruit_hid.consumer_control_code import ConsumerControlCode
 from adafruit_hid.keyboard import Keyboard
-from adafruit_hid.keycode import Keycode
-
-
 from adafruit_hid.keyboard_layout_us import KeyboardLayoutUS
-
+from adafruit_hid.keycode import Keycode
 
 # time.sleep(3)
 
@@ -175,6 +170,26 @@ MAPS = [
             ),
             5: InputAction(
                 ConsumerControlCode.VOLUME_DECREMENT, InputActionType.CONSUMER_CONTROL
+            ),
+        },
+    ),
+    InputMap(
+        "figma",
+        {
+            0: InputAction(Keycode.P),
+            1: InputAction(
+                [Keycode.SHIFT, Keycode.P],
+                InputActionType.SHORTCUT,
+            ),
+            2: InputAction(Keycode.V),
+            3: InputAction(
+                [Keycode.SHIFT, Keycode.TWO],
+                InputActionType.SHORTCUT,
+            ),
+            4: InputAction(Keycode.TAB),
+            5: InputAction(
+                [Keycode.SHIFT, Keycode.TAB],
+                InputActionType.SHORTCUT,
             ),
         },
     ),
